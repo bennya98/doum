@@ -101,8 +101,14 @@ function play_vizdoom(ind::MTCGPInd; seed=0, max_frames=10000)
             break
         end
     end
-    tot_reward = Tables.rows(game.get_total_reward())	
-    df = DataFrame(Reward = tot_reward)
+    reward = game.get_total_reward()+(20*game.get_game_variable(vzd.GameVariable.KILLCOUNT))	
+    
+    if reward < 0
+	reward = 0
+    end
+    println(reward)
+    reward_tab = Tables.rows(reward)
+    df = DataFrame(Reward = reward_tab)
     CSV.write("C:\\Users\\benny\\PycharmProjects\\doum\\results.csv", df.Reward, append=true)
     game.close()
     [reward]
@@ -114,9 +120,14 @@ function populate(evo::Cambrian.Evolution)
 end
 
 function evaluate(evo::Cambrian.Evolution)
-    fit = i::MTCGPInd->play_vizdoom(i; max_frames=min(10*evo.gen, 18000)) # seed=evo.gen,
+    fit = i::MTCGPInd->play_vizdoom(i; max_frames=18000) # seed=evo.gen,
     Cambrian.fitness_evaluate!(evo; fitness=fit)
 end
+
+# function evaluate(evo::Cambrian.Evolution)
+    # fit = i::MTCGPInd->play_vizdoom(i; max_frames=min(10*evo.gen, 18000)) # seed=evo.gen,
+    # Cambrian.fitness_evaluate!(evo; fitness=fit)
+# end
 
 e = Cambrian.Evolution(MTCGPInd, cfg; id=string("vizdoom_", args["seed"]),
                        populate=populate,
